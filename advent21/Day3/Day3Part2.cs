@@ -1,98 +1,82 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace advent21
 {
     internal class Day3Part2
     {
-        enum LifeSupport
+        private interface ILifeSupport
         {
-            Oxygen,
-            Carbon
+            int LifeSupportValue { get; }
+            IEnumerable<char> LifeSupportValueBinary { set; }
+            int GetAverage(decimal numberToRound);
+            int GetNumber(IEnumerable<char> binary);
+        }
+
+        private class OxygenLifeSupport : ILifeSupport
+        {
+            public int LifeSupportValue => GetNumber(LifeSupportValueBinary);
+            public IEnumerable<char> LifeSupportValueBinary { private get; set; }
+            public int GetAverage(decimal numberToRound) => numberToRound >= 0.5m ? 1 : 0;
+            public int GetNumber(IEnumerable<char> binary) => Convert.ToInt32(string.Join(string.Empty, binary), 2);
+        }
+
+        private class CarbonLifeSupport : ILifeSupport
+        {
+            public int LifeSupportValue => GetNumber(LifeSupportValueBinary);
+            public IEnumerable<char> LifeSupportValueBinary { private get; set; }
+            public int GetAverage(decimal numberToRound) => numberToRound < 0.5m ? 0 : 1;
+            public int GetNumber(IEnumerable<char> binary) => Convert.ToInt32(string.Join(string.Empty, binary), 2);
         }
 
         private const string TestInput = @".\Day3\Day3Test.txt";
         private const string PuzzleInput = @".\Day3\Day3Puzzle.txt";
 
-        internal void RunP2()
+        internal void Run()
         {
-            #region Local Functions
-            char[][] ReduceBinary(char[][] binaryArray, int charIndex, int binaryNumberLength, LifeSupport lifeSupport)
-            {
-                bool keepOnes =
-                    lifeSupport == LifeSupport.Oxygen
-                        ? MostCommonValue(binaryArray.Select(x => x[charIndex])) == 1
-                        : LeastCommonValue(binaryArray.Select(x => x[charIndex])) == 0;
-                if (keepOnes)
-                {
-                    return binaryArray.Where(intArray => intArray[charIndex] == '1').ToArray();
-                }
-                else
-                {
-                    return binaryArray.Where(intArray => intArray[charIndex] == '0').ToArray();
-                }
-            }
-
-            static int MostCommonValue(IEnumerable<char> enumerable)
-            {
-                _ = enumerable.TryGetNonEnumeratedCount(out int enumerableLength);
-
-                var totalBit = enumerable.Sum(e => int.Parse(e.ToString()));
-                decimal average = ((decimal)totalBit / enumerableLength);
-
-                return average >= 0.5m ? 1 : 0;
-            }
-
-            static int LeastCommonValue(IEnumerable<char> enumerable)
-            {
-                _ = enumerable.TryGetNonEnumeratedCount(out int enumerableLength);
-
-                var totalBit = enumerable.Sum(e => int.Parse(e.ToString()));
-                decimal average = ((decimal)totalBit / enumerableLength);
-
-                return average < 0.5m ? 0 : 1;
-            }
-            #endregion
-
             var binaryCharArrays = File.ReadAllLines(PuzzleInput).Select(binary => binary.ToCharArray()).ToArray();
-            _ = binaryCharArrays.TryGetNonEnumeratedCount(out int countOfBinaryCharArrays);
             _ = binaryCharArrays[0].TryGetNonEnumeratedCount(out int binaryNumberLength);
+            
+            var oxygenLifeSupport = new OxygenLifeSupport();
+            var carbonLifeSupport = new CarbonLifeSupport();
 
-            var oxygenBinary = new char[binaryNumberLength];
-            var carbonBinary = new char[binaryNumberLength];
+            CalculateLifeSupport(binaryNumberLength, binaryCharArrays, oxygenLifeSupport);
+            CalculateLifeSupport(binaryNumberLength, binaryCharArrays, carbonLifeSupport);
 
-            char[][] binary = binaryCharArrays;
-            for (int i = 0; i < binaryNumberLength + 1; i++)
-            {
-                if(binary.TryGetNonEnumeratedCount(out var curCount) && curCount == 1)
-                {
-                    oxygenBinary = binary[0];
-                    break;
-                }
-                binary = ReduceBinary(binary, i, binaryNumberLength, LifeSupport.Oxygen);
-            }
+            Console.WriteLine($"Life Support Rating: {oxygenLifeSupport.LifeSupportValue * carbonLifeSupport.LifeSupportValue}");
+            Console.ReadKey();
+        }
 
-            binary = binaryCharArrays;
-            for (int i = 0; i < binaryNumberLength + 1; i++)
+        private static void CalculateLifeSupport(int binaryNumberLength, char[][] binary, ILifeSupport lifeSupport)
+        {
+            for (var i = 0; i < binaryNumberLength + 1; i++)
             {
                 if (binary.TryGetNonEnumeratedCount(out var curCount) && curCount == 1)
                 {
-                    carbonBinary = binary[0];
+                    lifeSupport.LifeSupportValueBinary = binary[0];
                     break;
                 }
-                binary = ReduceBinary(binary, i, binaryNumberLength, LifeSupport.Carbon);
+
+                binary = ReduceBinary(binary, i, lifeSupport);
             }
+        }
 
-            
+        private static int CommonValue(IEnumerable<char> enumerable, ILifeSupport lifeSupport)
+        {
+            _ = enumerable.TryGetNonEnumeratedCount(out var enumerableLength);
 
-            var oxygenNumber = Convert.ToInt32(String.Join(String.Empty, oxygenBinary), 2);
-            var carbonNumber = Convert.ToInt32(String.Join(String.Empty, carbonBinary), 2);
+            var totalBit = enumerable.Sum(e => int.Parse(e.ToString()));
+            var totalDecimalAverage = ((decimal)totalBit / enumerableLength);
+                
+            return lifeSupport.GetAverage(totalDecimalAverage);
+        }
 
-            Console.WriteLine($"Life Support Rating: {oxygenNumber * carbonNumber}");
-            Console.ReadKey();
+        private static char[][] ReduceBinary(char[][] binaryArray, int charIndex, ILifeSupport lifeSupport)
+        {
+            var keepOnes =
+                lifeSupport.GetType() == typeof(OxygenLifeSupport)
+                    ? CommonValue(binaryArray.Select(x => x[charIndex]), lifeSupport) == 1
+                    : CommonValue(binaryArray.Select(x => x[charIndex]), lifeSupport) == 0;
+            return keepOnes 
+                ? binaryArray.Where(intArray => intArray[charIndex] == '1').ToArray() 
+                : binaryArray.Where(intArray => intArray[charIndex] == '0').ToArray();
         }
     }
 }
