@@ -14,14 +14,11 @@ namespace advent21
             public int x, y;
             public Coord(int[] vals)
             {
-                this.x = vals[0];
-                this.y = vals[1];
+                x = vals[0];
+                y = vals[1];
             }
 
-            public override string ToString()
-            {
-                return $"{x},{y}";
-            }
+            public override string ToString() => $"{x},{y}";            
         }
 
         private enum IncrementDirection
@@ -32,7 +29,7 @@ namespace advent21
         }
         internal void Run()
         {
-            var inputLines = File.ReadAllLines(testInput)
+            var inputLines = File.ReadAllLines(puzzleInput)
                 .Where( x => !string.IsNullOrWhiteSpace(x) )
                 .ToArray();
 
@@ -73,7 +70,7 @@ namespace advent21
                         );
 
                 Coord currentCoord = startPosition;
-                for (int i = 0; i < distance; i++)
+                for (int i = 0; i < distance + 1; i++)
                 {
                     diagram.TryGetValue(currentCoord, out var coordCount);
                     diagram[currentCoord] = coordCount + 1;
@@ -88,6 +85,7 @@ namespace advent21
             var coordsCrossedMoreThanOnce = diagram.Count(x => x.Value > 1);
 
             Console.WriteLine("Coords crossed more than once "+coordsCrossedMoreThanOnce.ToString());
+            Console.ReadKey();
         }
     }
 }
