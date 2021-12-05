@@ -2,5 +2,5 @@
 namespace advent21;
 
 class Program {
-    static void Main(string[] args) => new Day3().RunP2();
+    static void Main(string[] args) => new Day4().Run();
 }
