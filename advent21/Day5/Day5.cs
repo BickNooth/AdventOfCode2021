@@ -10,6 +10,7 @@ namespace advent21
     {
         private const string testInput = @".\Day5\Day5TestInput.txt";
         private const string puzzleInput = @".\Day5\Day5PuzzleInput.txt";
+        private const bool includeDiagonals = true;
         private struct Coord {
             public int x, y;
             public Coord(int[] vals)
@@ -43,7 +44,9 @@ namespace advent21
                 var startPosition = new Coord(startPositionGroup);
                 var endPosition = new Coord(endPositionGroup);
 
-                if (startPosition.x != endPosition.x && startPosition.y != endPosition.y )
+                if (startPosition.x != endPosition.x 
+                    && startPosition.y != endPosition.y
+                    && !includeDiagonals)
                 {
                     Console.WriteLine($"Skipping line, Diagonal between {startPosition} and {endPosition}");
                     continue;
