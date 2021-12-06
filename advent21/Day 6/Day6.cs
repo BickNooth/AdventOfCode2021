@@ -4,7 +4,7 @@
     {
         private const string testInput = @".\Day 6\Day6TestInput.txt";
         private const string puzzleInput = @".\Day 6\Day6PuzzleInput.txt";
-        private const int DaysToRun = 80;
+        private const int DaysToRun = 256;
         internal void Run()
         {
             var input = File
@@ -22,6 +22,8 @@
 
             for (int i = 0; i < DaysToRun; i++)
             {
+                var sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
                 List<LanternFish> newSpawnStates = new();
                 foreach (var lanternFish in spawnStates)
                 {
@@ -30,7 +32,8 @@
                 }
 
                 spawnStates.AddRange(newSpawnStates);
-                Console.WriteLine($"After {i + 1} Day{(i == 0 ? "" : "s")}: {string.Join(",", spawnStates)}");
+                sw.Stop();
+                Console.WriteLine($"Day {i} took {sw.Elapsed}");
             }
 
             Console.WriteLine($"Number of Lantern Fish: {spawnStates.Count()}");
